@@ -68,6 +68,7 @@ modules:
         aarch64:
           config-opts:
             - -DUSE_ANGRYLION=OFF
+          prepend-path: /usr/lib/sdk/llvm16/bin
     sources:
       - type: git
         url: https://github.com/joaorb64/RMG-K
