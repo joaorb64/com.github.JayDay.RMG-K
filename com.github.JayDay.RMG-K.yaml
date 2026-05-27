@@ -1,0 +1,76 @@
+app-id: com.github.JayDay.RMG-K
+runtime: org.kde.Platform
+runtime-version: '6.10'
+sdk: org.kde.Sdk
+command: RMG-K
+finish-args:
+  - --socket=x11
+  - --socket=pulseaudio
+  - --share=ipc
+  - --share=network
+  - --device=all
+  - --filesystem=xdg-pictures/RMG:rw
+cleanup:
+  - /lib/pkgconfig
+  - /lib/*.la
+  - /lib/*.a
+  - /lib/cmake
+  - /include
+
+modules:
+  - name: 7zip-ppmd
+    buildsystem: simple
+    build-commands:
+      - mkdir -p /app/ppmd-src
+      - cp -r . /app/ppmd-src/
+    sources:
+      - type: git
+        url: https://github.com/ip7z/7zip
+        tag: '26.01'
+        commit: 8c63d71ff886bda90c86db28466287f977374237
+        
+  - name: minizip-ng
+    buildsystem: cmake-ninja
+    config-opts:
+      - -DBUILD_SHARED_LIBS=ON
+      - -DMZ_BUILD_TEST=OFF
+      - -DFETCHCONTENT_SOURCE_DIR_PPMD=/app/ppmd-src
+    sources:
+      - type: archive
+        url: https://github.com/zlib-ng/minizip-ng/archive/refs/tags/4.2.1.tar.gz
+        sha256: 3cc35c2cb925dbe67cc801e3234b31b0f30197812a99377352fa1b551ab3d011
+
+  - name: hidapi
+    buildsystem: cmake-ninja
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=RelWithDebInfo
+    sources:
+      - type: archive
+        url: https://github.com/libusb/hidapi/archive/refs/tags/hidapi-0.15.0.tar.gz
+        sha256: 5d84dec684c27b97b921d2f3b73218cb773cf4ea915caee317ac8fc73cef8136
+        x-checker-data:
+          type: anitya
+          project-id: 5594
+          stable-only: true
+          url-template: https://github.com/libusb/hidapi/archive/refs/tags/hidapi-$version.tar.gz
+    cleanup:
+      - /share/doc
+
+  - name: RMG-K
+    buildsystem: cmake-ninja
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=RelWithDebInfo
+      - -DPORTABLE_INSTALL=OFF
+      - -DKCA_DRAG_DROP=ON
+      - -DUSE_ANGRYLION=ON
+    build-options:
+      arch:
+        aarch64:
+          config-opts:
+            - -DUSE_ANGRYLION=OFF
+    sources:
+      - type: git
+        url: https://github.com/joaorb64/RMG-K
+        branch: flatpak-fixes
+        #url: https://github.com/Jay-Day/RMG-K.git
+        #branch: master
