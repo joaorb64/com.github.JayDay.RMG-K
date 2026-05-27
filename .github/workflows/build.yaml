@@ -1,0 +1,50 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - 'v*'
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: bilelmoussaoui/flatpak-github-actions:kde-6.10
+      options: --privileged
+
+    strategy:
+      matrix:
+        arch: [x86_64, aarch64]
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install QEMU
+        if: matrix.arch == 'aarch64'
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      - name: Build
+        uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+        with:
+          bundle: com.github.JayDay.RMG-K-${{ matrix.arch }}.flatpak
+          manifest-path: com.github.JayDay.RMG-K.yaml
+          arch: ${{ matrix.arch }}
+          cache-key: flatpak-builder-${{ github.sha }}-${{ matrix.arch }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: com.github.JayDay.RMG-K-${{ matrix.arch }}
+          path: com.github.JayDay.RMG-K-${{ matrix.arch }}.flatpak
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: com.github.JayDay.RMG-K-${{ matrix.arch }}.flatpak
